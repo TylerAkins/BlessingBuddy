@@ -1,5 +1,8 @@
 # BlessingBuddy Changelog
 
+## 1.6.05 (2026-10-11)
+- Fixed: combat error when updating the title bar PvP warning (`UnitIsPVP` can return secret booleans in Forever)
+
 ## 1.6.04 (2026-10-11)
 - Fixed: combat error when storing cast tracking on a secret target name (`myCasts` / `pendingOwn` cannot use secret keys)
 

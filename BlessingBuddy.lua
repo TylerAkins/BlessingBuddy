@@ -970,9 +970,28 @@ local function PickBest(all, mine)
 	return fallback
 end
 
+local function SafeBool(v)
+	if v == nil then return false end
+	if issecretvalue and issecretvalue(v) then return nil end -- nil = unknown, do not test
+	return v and true or false
+end
+
+local function PvpWarningForTarget()
+	local ok, show = pcall(function()
+		local tPvp = SafeBool(UnitIsPVP("target"))
+		local pPvp = SafeBool(UnitIsPVP("player"))
+		if tPvp == nil or pPvp == nil then return false end
+		return tPvp and not pPvp
+	end)
+	return ok and show
+end
+
 local function ClassColored(unit)
 	local name = UnitName(unit) or "?"
-	if not UnitIsPlayer(unit) then
+	if issecretvalue and issecretvalue(name) then return "?" end
+	local isPlayer = SafeBool(UnitIsPlayer(unit))
+	if isPlayer == nil then isPlayer = false end
+	if not isPlayer then
 		return "|cff7fd17f" .. name .. "|r |cffaaaaaa(" .. L.PET .. ")|r"
 	end
 	local _, class = UnitClass(unit)
@@ -1279,10 +1298,13 @@ local function UpdateVisuals()
 
 	if UnitExists("target") then
 		local txt = ClassColored("target")
-		local lvl = UnitLevel("target")
-		if lvl and lvl > 0 then txt = txt .. " |cffaaaaaa" .. lvl .. "|r" end
+		local okLvl, lvl = pcall(UnitLevel, "target")
+		if okLvl and type(lvl) == "number" and lvl > 0
+			and not (issecretvalue and issecretvalue(lvl)) then
+			txt = txt .. " |cffaaaaaa" .. lvl .. "|r"
+		end
 		-- Warnung: Heilen/Buffen eines PvP-geflaggten Spielers flaggt dich mit
-		if UnitIsPVP("target") and not UnitIsPVP("player") then
+		if PvpWarningForTarget() then
 			txt = txt .. "  |cffff4040" .. L.PVP .. "|r"
 		end
 		title.text:SetText(txt)
