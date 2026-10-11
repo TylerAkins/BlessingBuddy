@@ -1,5 +1,8 @@
 # BlessingBuddy Changelog
 
+## 1.6.03 (2026-10-11)
+- Fixed: Lua error on `UNIT_SPELLCAST_SUCCEEDED` in combat when the cast target name is a secret string (e.g. Judgement on a protected target)
+
 ## 1.6.02 (2026-10-11)
 - Fixed: combat/instance errors from group API checks and from updating options or visibility drivers during combat lockdown
 - Fixed: self options checkbox stored on `panel.self` (conflicts with frame `self`); renamed to `chkSelf`

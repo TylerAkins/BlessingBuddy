@@ -479,6 +479,13 @@ local REFRESH_BELOW = 300 -- ab 5 Minuten Restzeit wird Auffrischen empfohlen
 local myCasts = {}        -- [Zielname][Zaubername] = GetTime()
 local pendingCasts = {}   -- [castGUID] = Zielname
 
+-- Forever: cast target names from UNIT_SPELLCAST_* can be secret in combat (no :match).
+local function CastTargetKey(tname)
+	if not tname then return nil end
+	if issecretvalue and issecretvalue(tname) then return tname end
+	return tname:match("^[^%s%-]+") or tname
+end
+
 -- Namen (lokalisiert), unter denen ein Buff-Schlüssel auf dem Ziel liegen kann
 local equivNames = {}
 local function NamesFor(key)
@@ -1480,7 +1487,8 @@ ev:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
 				if tname and sname then
 					-- Forever meldet hier "Vorname Nachname"; UnitName liefert nur den
 					-- Vornamen -> nur das erste Wort (ohne Realm) als Schlüssel
-					tname = tname:match("^[^%s%-]+") or tname
+					tname = CastTargetKey(tname)
+					if not tname then return end
 					myCasts[tname] = myCasts[tname] or {}
 					myCasts[tname][sname] = GetTime()
 					RememberOwnBuff(tname, sname)
