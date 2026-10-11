@@ -838,14 +838,22 @@ local function IsOtherPet(unit)
 		and not UnitIsUnit(unit, "pet")
 end
 
+-- Forever: group membership APIs can throw or return "secret" values in combat/instances.
+local function SafeUnitFlag(fn, unit)
+	if not fn then return false end
+	local ok, r = pcall(fn, unit)
+	if not ok then return false end
+	return r ~= nil and r ~= false
+end
+
 local function UnitInPlayerRaid(unit)
-	if UnitPlayerOrPetInRaid then return UnitPlayerOrPetInRaid(unit) end
-	return UnitInRaid(unit)
+	if UnitPlayerOrPetInRaid then return SafeUnitFlag(UnitPlayerOrPetInRaid, unit) end
+	return SafeUnitFlag(UnitInRaid, unit)
 end
 
 local function UnitInPlayerParty(unit)
-	if UnitPlayerOrPetInParty then return UnitPlayerOrPetInParty(unit) end
-	return UnitInParty(unit)
+	if UnitPlayerOrPetInParty then return SafeUnitFlag(UnitPlayerOrPetInParty, unit) end
+	return SafeUnitFlag(UnitInParty, unit)
 end
 
 local function InMyGroup(unit)
@@ -856,7 +864,7 @@ local function GetTargetVisibilityCategory(unit)
 	if UnitIsUnit(unit, "player") then
 		return "self"
 	end
-	if UnitInRaid and UnitInRaid("player") and UnitInPlayerRaid(unit) then
+	if SafeUnitFlag(UnitInRaid, "player") and UnitInPlayerRaid(unit) then
 		return "raid"
 	end
 	if UnitInPlayerParty(unit) then
@@ -896,10 +904,16 @@ local function IsBuffLayoutTarget()
 		and (UnitIsPlayer("target") or IsOtherPet("target"))
 end
 
+local function TargetVisibilityCategory()
+	local ok, cat = pcall(GetTargetVisibilityCategory, "target")
+	if not ok or not cat then return "outside" end
+	return cat
+end
+
 local function ShouldShow()
 	if forceShow then return true end
 	return IsVisibilityTarget()
-		and VisibilityAllowedForCategory(GetTargetVisibilityCategory("target"))
+		and VisibilityAllowedForCategory(TargetVisibilityCategory())
 end
 
 -- Sichtbarkeit über einen sicheren State-Driver, damit die Leiste auch im
@@ -907,6 +921,10 @@ end
 -- (die drei Sichtbarkeits-Optionen gelten nur außerhalb des Kampfes).
 -- Außerhalb: das Ergebnis von ShouldShow().
 local function SetVisible(show)
+	if InCombatLockdown() then
+		pendingSecure = true
+		return
+	end
 	RegisterStateDriver(frame, "visibility",
 		"[combat,@target,help,nodead] show; [combat] hide; " .. (show and "show" or "hide"))
 end
@@ -1527,7 +1545,8 @@ ev:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
 		-- Buffs haben sich geändert -> Empfehlung neu berechnen
 		-- (im Kampf nur Optik; die Empfehlung folgt nach Kampfende)
 	elseif event == "PLAYER_REGEN_ENABLED" then
-		if not pendingSecure then return end
+		UpdateSecure()
+		return
 	end
 	UpdateSecure()
 end)
@@ -1682,12 +1701,12 @@ local function SetCheckState(cb, checked)
 end
 
 SyncOptionsPanel = function()
-	if not optionsPanel or not db then return end
+	if not optionsPanel or not db or InCombatLockdown() then return end
 	EnsureDefaults()
 	SetCheckState(optionsPanel.outside, OptionChecked("showOutsideGroup", true))
 	SetCheckState(optionsPanel.party, OptionChecked("showPartyMembers", false))
 	SetCheckState(optionsPanel.raid, OptionChecked("showRaidMembers", false))
-	SetCheckState(optionsPanel.self, OptionChecked("showSelf", false))
+	SetCheckState(optionsPanel.chkSelf, OptionChecked("showSelf", false))
 end
 
 local function InitOptionsPanel()
@@ -1721,7 +1740,7 @@ local function InitOptionsPanel()
 	panel.outside = AddCheck(-72, L.OPT_SHOW_OUTSIDE, "showOutsideGroup")
 	panel.party = AddCheck(-100, L.OPT_SHOW_PARTY, "showPartyMembers")
 	panel.raid = AddCheck(-128, L.OPT_SHOW_RAID, "showRaidMembers")
-	panel.self = AddCheck(-156, L.OPT_SHOW_SELF, "showSelf")
+	panel.chkSelf = AddCheck(-156, L.OPT_SHOW_SELF, "showSelf")
 
 	panel:SetScript("OnShow", SyncOptionsPanel)
 	-- Interface Options (legacy) and Settings > AddOns call refresh when the panel is shown.

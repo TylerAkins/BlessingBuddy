@@ -2,9 +2,11 @@
 
 # BlessingBuddy
 
-One-click buffs and rescue heals for players and pets **outside your group** in World of Warcraft: Forever.
+One-click buffs and rescue heals for friendly players and pets in World of Warcraft: Forever.
 
-Target a friendly stranger and BlessingBuddy shows a small bar with your single-target buffs, a recommended buff for the target's class, the target's health and a row of rescue heals.
+Target a friendly player (or pet) and BlessingBuddy shows a small bar with your single-target buffs, a recommended buff for the target's class, the target's health and a row of rescue heals. By default it appears for players **outside your group** only; party, raid, and self are optional in Interface > AddOns > BlessingBuddy.
+
+**This fork** ([TylerAkins/BlessingBuddy](https://github.com/TylerAkins/BlessingBuddy)) ships the optional group/self visibility settings. The upstream addon may not include them yet.
 
 <p align="center">
   <img src="media/gallery-1-recommended-buff.png" width="640" alt="Kings already active, Might recommended next">

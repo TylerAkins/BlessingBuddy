@@ -1,5 +1,10 @@
 # BlessingBuddy Changelog
 
+## 1.6.02 (2026-10-11)
+- Fixed: combat/instance errors from group API checks and from updating options or visibility drivers during combat lockdown
+- Fixed: self options checkbox stored on `panel.self` (conflicts with frame `self`); renamed to `chkSelf`
+- Fixed: leaving combat now always runs `UpdateSecure` so out-of-combat visibility toggles apply again after the secure combat driver
+
 ## 1.6.01 (2026-10-07)
 - New: optional "Show for yourself" visibility toggle (default off); same out-of-combat rules as the other visibility options
 - Fixed: self-target did not work because the client does not report you as a "friendly" target to yourself
