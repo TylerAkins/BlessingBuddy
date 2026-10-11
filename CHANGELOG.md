@@ -1,5 +1,8 @@
 # BlessingBuddy Changelog
 
+## 1.6.04 (2026-10-11)
+- Fixed: combat error when storing cast tracking on a secret target name (`myCasts` / `pendingOwn` cannot use secret keys)
+
 ## 1.6.03 (2026-10-11)
 - Fixed: Lua error on `UNIT_SPELLCAST_SUCCEEDED` in combat when the cast target name is a secret string (e.g. Judgement on a protected target)
 

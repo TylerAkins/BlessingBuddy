@@ -479,10 +479,13 @@ local REFRESH_BELOW = 300 -- ab 5 Minuten Restzeit wird Auffrischen empfohlen
 local myCasts = {}        -- [Zielname][Zaubername] = GetTime()
 local pendingCasts = {}   -- [castGUID] = Zielname
 
--- Forever: cast target names from UNIT_SPELLCAST_* can be secret in combat (no :match).
+-- Forever: cast target names from UNIT_SPELLCAST_* can be secret in combat (no string ops or table keys).
+local function IsSecretName(name)
+	return name and issecretvalue and issecretvalue(name)
+end
+
 local function CastTargetKey(tname)
-	if not tname then return nil end
-	if issecretvalue and issecretvalue(tname) then return tname end
+	if not tname or IsSecretName(tname) then return nil end
 	return tname:match("^[^%s%-]+") or tname
 end
 
@@ -512,7 +515,7 @@ end
 -- Eigenen, erfolgreich gewirkten Buff für ApplyPending merken (nur Buffs aus
 -- der Buff-Liste, keine Heilzauber)
 local function RememberOwnBuff(tname, sname)
-	if not tname or not sname then return end
+	if not tname or not sname or IsSecretName(tname) then return end
 	for _, key in ipairs(ORDER) do
 		for _, n in ipairs(NamesFor(key)) do
 			if n == sname then
@@ -1481,19 +1484,28 @@ ev:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
 			if event == "UNIT_SPELLCAST_SENT" and arg3 then
 				pendingCasts[arg3] = arg2
 			elseif event == "UNIT_SPELLCAST_SUCCEEDED" and arg2 and pendingCasts[arg2] then
-				local tname = pendingCasts[arg2]
+				local rawTname = pendingCasts[arg2]
 				pendingCasts[arg2] = nil
 				local sname = SpellInfo(arg3 or 0)
-				if tname and sname then
+				if rawTname and sname then
+					local secretT = IsSecretName(rawTname)
 					-- Forever meldet hier "Vorname Nachname"; UnitName liefert nur den
 					-- Vornamen -> nur das erste Wort (ohne Realm) als Schlüssel
-					tname = CastTargetKey(tname)
-					if not tname then return end
-					myCasts[tname] = myCasts[tname] or {}
-					myCasts[tname][sname] = GetTime()
-					RememberOwnBuff(tname, sname)
-					local okT, same = pcall(function() return UnitName("target") == tname end)
+					local tname = CastTargetKey(rawTname)
+					if tname then
+						myCasts[tname] = myCasts[tname] or {}
+						myCasts[tname][sname] = GetTime()
+						RememberOwnBuff(tname, sname)
+					end
+					local okT, same = pcall(function()
+						return tname and UnitName("target") == tname
+					end)
 					if okT and same then
+						AddOwnHot(arg3)
+						UpdateVisuals()
+						UpdatePrediction()
+					elseif secretT and UnitExists("target") then
+						-- Name keys forbidden; HoT tracking still works via spell ID on current target
 						AddOwnHot(arg3)
 						UpdateVisuals()
 						UpdatePrediction()
