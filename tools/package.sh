@@ -6,7 +6,7 @@ addon_version="$(go run ./cmd/release validate)"
 stage="$(mktemp -d)"
 trap 'rm -rf "$stage"' EXIT
 mkdir -p "$stage/BlessingBuddy" .release
-for file in BlessingBuddy.lua Bindings.xml README.md LICENSE CHANGELOG.md RELEASE_NOTES.md; do
+for file in BlessingBuddy.lua SalvationRules.lua Bindings.xml README.md LICENSE CHANGELOG.md RELEASE_NOTES.md; do
 	cp "$file" "$stage/BlessingBuddy/"
 done
 cp BlessingBuddy.toc "$stage/BlessingBuddy/"

@@ -1,9 +1,9 @@
 ## Interface: 16001
 ## Title: BlessingBuddy
-## Notes: Friendly-target buffs and rescue heals; Salvation is party/raid only
-## Notes-deDE: Buffs und Rettungs-Heilung für befreundete Ziele; Rettung nur für Gruppe/Schlachtzug
+## Notes: Friendly-target buffs and rescue heals; Salvation is for group members and yourself
+## Notes-deDE: Buffs und Rettungs-Heilung für befreundete Ziele; Rettung für Gruppe/Schlachtzug und dich selbst
 ## Author: TomSteglitz
-## Version: 1.6.6
+## Version: 1.6.7
 ## Category: Buffs & Debuffs
 ## Category-deDE: Buffs & Debuffs
 ## IconTexture: Interface\Icons\Spell_Magic_GreaterBlessingofKings
@@ -12,4 +12,5 @@
 ## X-Curse-Project-ID: 1724693
 ## X-Website: https://www.curseforge.com/wow/addons/blessingbuddy
 
+SalvationRules.lua
 BlessingBuddy.lua
