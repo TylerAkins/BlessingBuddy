@@ -1,5 +1,8 @@
 # BlessingBuddy Changelog
 
+## 1.6.7 (2026-10-22)
+- Fixed: Blessing of Salvation is available for yourself even when you are not in a party or raid.
+
 ## 1.6.6 (2026-10-22)
 - Fixed: Blessing of Salvation is available only for party and raid players when their visibility is enabled.
 - Fixed: Salvation no longer takes the Paladin's one-blessing recommendation or refresh slot.

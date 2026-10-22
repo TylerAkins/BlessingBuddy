@@ -7,7 +7,7 @@
 -- Außerhalb des Kampfes: Sichtbarkeit nach Einstellung (Fremde/Gruppe/Raid).
 -- Im Kampf für jeden befreundeten Spieler (Rettung geht vor).
 
-local ADDON = ...
+local ADDON, addon = ...
 local _, myClass = UnitClass("player")
 
 ------------------------------------------------------------------------
@@ -27,7 +27,7 @@ local CLASS_DATA = {
 			LIGHT     = 19977, -- Segen des Lichts
 			SANCTUARY = 20911, -- Segen des Refugiums (Schutz-Talent)
 		},
-		groupSpells = { SALVATION = 1038 }, -- independent of the blessing slot, group/raid only
+		groupSpells = { SALVATION = 1038 }, -- independent of the blessing slot; group/raid and self
 		order = { "KINGS", "MIGHT", "WISDOM", "LIGHT", "SANCTUARY" },
 		priority = {
 			WARRIOR = { "KINGS", "MIGHT", "LIGHT" },
@@ -902,6 +902,10 @@ local function TargetIsSelf()
 	return UnitExists("target") and UnitIsUnit("target", "player")
 end
 
+local function TargetCanReceiveSalvation()
+	return addon.CanUseSalvation(TargetIsSelf(), UnitIsPlayer("target"), InMyGroup("target"))
+end
+
 -- Forever/Classic: UnitIsFriend("player", "target") is often nil when target is you.
 local function IsVisibilityTarget()
 	if not UnitExists("target") or UnitIsDeadOrGhost("target") then return false end
@@ -1291,7 +1295,7 @@ local function UpdateVisuals()
 	for _, key in ipairs(DISPLAY_ORDER) do
 		local b = small[key]
 		local groupOnly = GROUP_SPELLS[key] ~= nil
-		local allowed = not groupOnly or (UnitIsPlayer("target") and InMyGroup("target"))
+		local allowed = not groupOnly or TargetCanReceiveSalvation()
 		b.active:SetShown(allowed and b.spellName ~= nil and HasKey(all, key))
 		SetBad(b, allowed and b.spellName ~= nil and BadForTarget(key, b.spellID))
 	end
@@ -1358,7 +1362,7 @@ local function UpdateSecure()
 	for _, key in ipairs(DISPLAY_ORDER) do
 		local b = small[key]
 		local allowed = not petTarget or (CFG.petOK and CFG.petOK[key])
-		if GROUP_SPELLS[key] and not (UnitIsPlayer("target") and InMyGroup("target")) then allowed = false end
+		if GROUP_SPELLS[key] and not TargetCanReceiveSalvation() then allowed = false end
 		local castID = allowed and BuffRankFor(BLESSINGS[key] or GROUP_SPELLS[key], tLevel)
 		if castID and SpellInfo(castID) then
 			AssignButton(b, castID, true)
