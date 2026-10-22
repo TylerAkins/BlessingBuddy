@@ -14,15 +14,42 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CF_API_KEY: ${{ secrets.CF_API_KEY }}
-      GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Validate version and build archive
+        run: |
+          addon_version="$(go run ./cmd/release validate)"
+          test "v$addon_version" = "$GITHUB_REF_NAME"
+          sudo apt-get update
+          sudo apt-get install -y luajit
+          luajit -b BlessingBuddy.lua /dev/null
+          go test ./...
+          bash tools/package.sh
 
       - name: Package and upload
         uses: BigWigsMods/packager@v2
         with:
-          # Dateiname : Anzeigename auf CurseForge, z. B. "BlessingBuddy v1.5.01"
+          # Dateiname : Anzeigename auf CurseForge, z. B. "BlessingBuddy v1.6.6"
           args: -n "{package-name}-{project-version}:{package-name} {project-version}"
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          addon_version="$(go run ./cmd/release validate)"
+          gh release create "$GITHUB_REF_NAME" \
+            ".release/BlessingBuddy-$addon_version.zip" \
+            ".release/BlessingBuddy-$addon_version.zip.manifest.txt" \
+            --verify-tag --title "v$addon_version" \
+            --notes-file RELEASE_NOTES.md

@@ -7,3 +7,9 @@ manual-changelog:
 ignore:
   - README.md
   - media
+  - VERSION
+  - RELEASE_NOTES.md
+  - tools
+  - cmd
+  - internal
+  - go.mod

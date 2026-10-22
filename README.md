@@ -6,6 +6,8 @@ One-click buffs and rescue heals for friendly players and pets in World of Warcr
 
 Target a friendly player (or pet) and BlessingBuddy shows a small bar with your single-target buffs, a recommended buff for the target's class, the target's health and a row of rescue heals. By default it appears for players **outside your group** only; party, raid, and self are optional in Interface > AddOns > BlessingBuddy.
 
+For Paladins, Blessing of Salvation is a separate button for party and raid players when those visibility options are enabled.
+
 **This fork** ([TylerAkins/BlessingBuddy](https://github.com/TylerAkins/BlessingBuddy)) ships the optional group/self visibility settings. The upstream addon may not include them yet.
 
 <p align="center">

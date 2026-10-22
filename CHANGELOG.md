@@ -1,5 +1,9 @@
 # BlessingBuddy Changelog
 
+## 1.6.6 (2026-10-22)
+- Fixed: Blessing of Salvation is available only for party and raid players when their visibility is enabled.
+- Fixed: Salvation no longer takes the Paladin's one-blessing recommendation or refresh slot.
+
 ## 1.6.05 (2026-10-11)
 - Fixed: combat error when updating the title bar PvP warning (`UnitIsPVP` can return secret booleans in Forever)
 

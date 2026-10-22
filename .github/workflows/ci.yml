@@ -1,0 +1,38 @@
+name: CI
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Validate Lua, Go, and release metadata
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y luajit
+          luajit -b BlessingBuddy.lua /dev/null
+          go test ./...
+          go run ./cmd/release validate
+      - name: Build and inspect package
+        run: |
+          bash tools/package.sh
+          unzip -q .release/BlessingBuddy-*.zip -d "$RUNNER_TEMP/addon"
+          luajit -b "$RUNNER_TEMP/addon/BlessingBuddy/BlessingBuddy.lua" /dev/null
+          unzip -l .release/BlessingBuddy-*.zip
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: BlessingBuddy-${{ github.sha }}
+          path: .release/*
+          include-hidden-files: true
+          if-no-files-found: error

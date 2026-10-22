@@ -26,9 +26,9 @@ local CLASS_DATA = {
 			WISDOM    = 19742, -- Segen der Weisheit
 			LIGHT     = 19977, -- Segen des Lichts
 			SANCTUARY = 20911, -- Segen des Refugiums (Schutz-Talent)
-			SALVATION = 1038,  -- Segen der Rettung
 		},
-		order = { "KINGS", "MIGHT", "WISDOM", "LIGHT", "SANCTUARY", "SALVATION" },
+		groupSpells = { SALVATION = 1038 }, -- independent of the blessing slot, group/raid only
+		order = { "KINGS", "MIGHT", "WISDOM", "LIGHT", "SANCTUARY" },
 		priority = {
 			WARRIOR = { "KINGS", "MIGHT", "LIGHT" },
 			ROGUE   = { "KINGS", "MIGHT", "LIGHT" },
@@ -143,7 +143,11 @@ local CFG = CLASS_DATA[myClass]
 if not CFG then return end -- Klasse ohne Fremd-Buffs: Addon bleibt inaktiv
 
 local BLESSINGS = CFG.spells
+local GROUP_SPELLS = CFG.groupSpells or {}
 local ORDER = CFG.order
+local DISPLAY_ORDER = {}
+for _, key in ipairs(ORDER) do DISPLAY_ORDER[#DISPLAY_ORDER + 1] = key end
+for key in pairs(GROUP_SPELLS) do DISPLAY_ORDER[#DISPLAY_ORDER + 1] = key end
 local PRIORITY = CFG.priority
 local DEFAULT_PRIORITY = CFG.default
 local HEALS = CFG.heals or {}
@@ -494,7 +498,7 @@ local equivNames = {}
 local function NamesFor(key)
 	if equivNames[key] then return equivNames[key] end
 	local list = {}
-	local main = SpellInfo(BLESSINGS[key])
+	local main = SpellInfo(BLESSINGS[key] or GROUP_SPELLS[key])
 	if main then list[#list + 1] = main end
 	for _, id in ipairs(EQUIV[key] or {}) do
 		local n = SpellInfo(id)
@@ -516,7 +520,7 @@ end
 -- der Buff-Liste, keine Heilzauber)
 local function RememberOwnBuff(tname, sname)
 	if not tname or not sname or IsSecretName(tname) then return end
-	for _, key in ipairs(ORDER) do
+	for _, key in ipairs(DISPLAY_ORDER) do
 		for _, n in ipairs(NamesFor(key)) do
 			if n == sname then
 				pendingOwn[tname] = pendingOwn[tname] or {}
@@ -763,10 +767,11 @@ local function BadForTarget(key, spellID)
 	if not key or not UnitExists("target") then return false end
 	if not UnitIsPlayer("target") and not (CFG.petOK and CFG.petOK[key]) then return true end
 	local tLevel = TargetLevel()
-	if BuffRankFor(BLESSINGS[key], tLevel) == nil then return true end
+	local spell = BLESSINGS[key] or GROUP_SPELLS[key]
+	if BuffRankFor(spell, tLevel) == nil then return true end
 	if spellID and tLevel then
 		local fallback
-		for _, r in ipairs(BUFF_RANKS[BLESSINGS[key]] or {}) do
+		for _, r in ipairs(BUFF_RANKS[spell] or {}) do
 			if r[1] == spellID then fallback = r[2] end
 		end
 		local need = LearnLevel(spellID, fallback)
@@ -827,7 +832,7 @@ local function UpdateBestState()
 end
 
 local small = {}
-for _, key in ipairs(ORDER) do
+for _, key in ipairs(DISPLAY_ORDER) do
 	small[key] = CreateSpellButton("BlessingBuddy" .. key .. "Button", SMALL)
 	small[key]:Hide()
 end
@@ -1283,10 +1288,12 @@ end
 local function UpdateVisuals()
 	if not frame:IsShown() then return end
 	local all = TargetBuffs()
-	for _, key in ipairs(ORDER) do
+	for _, key in ipairs(DISPLAY_ORDER) do
 		local b = small[key]
-		b.active:SetShown(b.spellName ~= nil and HasKey(all, key))
-		SetBad(b, b.spellName ~= nil and BadForTarget(key, b.spellID))
+		local groupOnly = GROUP_SPELLS[key] ~= nil
+		local allowed = not groupOnly or (UnitIsPlayer("target") and InMyGroup("target"))
+		b.active:SetShown(allowed and b.spellName ~= nil and HasKey(all, key))
+		SetBad(b, allowed and b.spellName ~= nil and BadForTarget(key, b.spellID))
 	end
 	best.active:SetShown(best.spellName ~= nil and HasKey(all, best.key))
 	SetBad(best, best.spellName ~= nil and BadForTarget(best.key, best.spellID))
@@ -1348,10 +1355,11 @@ local function UpdateSecure()
 	-- Begleiter: die meisten Buffs wirken in Forever nicht -> nur petOK-Buffs zeigen
 	local petTarget = buffTarget and not UnitIsPlayer("target")
 	local tLevel = buffTarget and TargetLevel() or nil
-	for _, key in ipairs(ORDER) do
+	for _, key in ipairs(DISPLAY_ORDER) do
 		local b = small[key]
 		local allowed = not petTarget or (CFG.petOK and CFG.petOK[key])
-		local castID = allowed and BuffRankFor(BLESSINGS[key], tLevel)
+		if GROUP_SPELLS[key] and not (UnitIsPlayer("target") and InMyGroup("target")) then allowed = false end
+		local castID = allowed and BuffRankFor(BLESSINGS[key] or GROUP_SPELLS[key], tLevel)
 		if castID and SpellInfo(castID) then
 			AssignButton(b, castID, true)
 			b:ClearAllPoints()
@@ -1422,7 +1430,7 @@ local function UpdateSecure()
 
 	if db and db.debug then
 		local parts = {}
-		for _, key in ipairs(ORDER) do
+		for _, key in ipairs(DISPLAY_ORDER) do
 			parts[#parts + 1] = key .. "=" .. S(small[key]:IsShown() and small[key].spellID or "-")
 		end
 		Log("state: best=%s(%s) tLevel=%s buttons: %s", S(bestKey), S(best.spellID),
