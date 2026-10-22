@@ -8,7 +8,11 @@ Target a friendly player (or pet) and BlessingBuddy shows a small bar with your 
 
 For Paladins, Blessing of Salvation is a separate button for party and raid players when those visibility options are enabled.
 
-**This fork** ([TylerAkins/BlessingBuddy](https://github.com/TylerAkins/BlessingBuddy)) ships the optional group/self visibility settings. The upstream addon may not include them yet.
+## About this fork
+
+BlessingBuddy was created by [Tom Steglitz](https://github.com/TomSteglitz/BlessingBuddy). This repository is a personal fork, and the original work remains credited to Tom Steglitz under the MIT license (see [LICENSE](LICENSE)). I made the changes in this fork for my own use. This fork adds optional visibility settings and group-only Blessing of Salvation.
+
+I do not plan to distribute this fork on CurseForge unless the original addon is confirmed abandoned. The current automated release workflow still uploads tagged releases to CurseForge, so the workflow must be changed before that intention is reflected in future releases. The CurseForge link below points to the original addon listing; GitHub Releases are for this fork.
 
 <p align="center">
   <img src="media/gallery-1-recommended-buff.png" width="640" alt="Kings already active, Might recommended next">
@@ -19,8 +23,8 @@ For Paladins, Blessing of Salvation is a separate button for party and raid play
 </p>
 
 ## Download
-- [CurseForge](https://www.curseforge.com/wow/addons/blessingbuddy)
-- [GitHub Releases](../../releases)
+- [CurseForge listing for the original addon](https://www.curseforge.com/wow/addons/blessingbuddy)
+- [GitHub Releases for this fork](../../releases)
 
 ## Features
 - Recommended buff by target class, skips buffs the target already has
@@ -53,11 +57,11 @@ German aliases: `/segen move`, `/segen reset`, `/segen debug`.
 Please open an [issue](../../issues) and include your WoW version, class/level, the target and the output of `/bb debug`. For tricky bugs, `/bb log on`, reproduce, `/reload` and attach `WTF\Account\<ACCOUNT>\SavedVariables\BlessingBuddy.lua`.
 
 ## Releasing (maintainers)
-1. Update `CHANGELOG.md` and the version in `BlessingBuddy.toc` (scheme `MAJOR.MINOR.PATCH`, two-digit patch: new feature → `1.6.00`, bug fix → `1.5.01`)
-2. Commit, then tag: `git tag v1.5.00 && git push --tags`
-3. The GitHub Action packages the addon with the [BigWigs packager](https://github.com/BigWigsMods/packager) and uploads it to CurseForge and GitHub Releases.
+1. Update `VERSION`, `BlessingBuddy.toc`, `CHANGELOG.md`, and `RELEASE_NOTES.md`. Versions use `MAJOR.MINOR.PATCH`, and the first heading in `RELEASE_NOTES.md` must match `VERSION`.
+2. Commit the changes, then create and push the matching tag, for example: `git tag v1.6.7 && git push origin v1.6.7`.
+3. The release workflow validates the version and notes, builds the ZIP, uploads it with the [BigWigs packager](https://github.com/BigWigsMods/packager), and creates a GitHub Release with the ZIP and manifest.
 
-Requires the repository secret `CF_API_KEY` (CurseForge API token).
+The current workflow also uploads to CurseForge when the repository has a `CF_API_KEY` secret. Remove or disable that upload before making a release under the distribution policy above.
 
 ## License
 MIT – see [LICENSE](LICENSE).
